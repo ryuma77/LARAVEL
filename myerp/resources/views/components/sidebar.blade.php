@@ -32,7 +32,7 @@ $menu = [
     'transactions' => [
         'label' => 'Transactions',
         'children' => [
-            ['id'=>'sales','label'=>'Sales','icon'=>'🛒','href'=>'#','permission'=>'purchase.view'],
+            ['id'=>'sales','label'=>'Sales','icon'=>'🛒','href'=>route('sales-order.index'),'permission'=>'purchase.view'],
             ['id'=>'purchase','label'=>'Purchase','icon'=>'📥','href'=>route('po.index'),'permission'=>'purchase.view'],
             ['id'=>'inventory','label'=>'Inventory','icon'=>'📦','href'=>'#','permission'=>'inventory.view'],
              ['id'=>'good-receipt','label'=>'Good Receipt','icon'=>'📦','href'=>route('good-receipt.index'),'permission'=>'inventory.manage'],

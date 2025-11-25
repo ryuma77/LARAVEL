@@ -15,6 +15,7 @@ use App\Http\Controllers\BinController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GoodReceiptController;
 use App\Http\Controllers\GoodReceiptDetailController;
+use App\Http\Controllers\SalesOrderController;
 
 
 Route::get('/', function () {
@@ -170,29 +171,34 @@ Route::middleware(['auth', 'permission:purchase.manage'])
         Route::post('/{po}/details', [PurchaseOrderController::class, 'storeDetail'])->name('details.store');
     });
 
-Route::middleware(['auth', 'permission:inventory.manage'])
-    ->prefix('good-receipt')
-    ->name('good-receipt.')
+// GOOD RECEIPT
+Route::prefix('good-receipt')->name('good-receipt.')->group(function () {
+
+    Route::get('/', [GoodReceiptController::class, 'index'])->name('index');
+    Route::get('/create', [GoodReceiptController::class, 'create'])->name('create');
+    Route::post('/', [GoodReceiptController::class, 'store'])->name('store');
+
+    // Single-page edit
+    Route::get('/{id}/edit', [GoodReceiptController::class, 'edit'])->name('edit');
+    Route::post('/{id}/add-detail', [GoodReceiptController::class, 'addDetail'])->name('add-detail');
+    Route::delete('/detail/{detail}', [GoodReceiptController::class, 'deleteDetail'])->name('delete-detail');
+});
+
+Route::middleware(['auth', 'permission:sales.manage'])
+    ->prefix('sales-order')
+    ->name('sales-order.')
     ->group(function () {
 
-        // INDEX
-        Route::get('/', [GoodReceiptController::class, 'index'])->name('index');
+        Route::get('/', [SalesOrderController::class, 'index'])->name('index');
+        Route::get('/create', [SalesOrderController::class, 'create'])->name('create');
+        Route::post('/', [SalesOrderController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [SalesOrderController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [SalesOrderController::class, 'update'])->name('update');
 
-        // CREATE HEADER
-        Route::get('/create', [GoodReceiptController::class, 'create'])->name('create');
-        Route::post('/', [GoodReceiptController::class, 'store'])->name('store');
-
-        // ENTRY DETAIL
-        Route::get('/{goodReceipt}/details/create', [GoodReceiptDetailController::class, 'create'])
-            ->name('details.create');
-
-        Route::post('/{goodReceipt}/details', [GoodReceiptDetailController::class, 'store'])
-            ->name('details.store');
+        // DETAILS
+        Route::post('/{id}/details', [SalesOrderController::class, 'addDetail'])->name('details.add');
+        Route::delete('/{soId}/details/{detailId}', [SalesOrderController::class, 'deleteDetail'])->name('details.delete');
     });
-
-
-
-
 
 Route::get('/dashboard', function () {
     return view('dashboard');

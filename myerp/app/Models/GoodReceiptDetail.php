@@ -11,7 +11,7 @@ class GoodReceiptDetail extends Model
             'product_id',
             'quantity',
             'unit_price',
-            'total_price'
+            'total_price',
       ];
 
       public function goodReceipt()

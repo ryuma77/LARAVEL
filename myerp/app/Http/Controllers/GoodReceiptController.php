@@ -7,33 +7,27 @@ use App\Models\PurchaseOrder;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\GoodReceiptDetail;
 
 class GoodReceiptController extends Controller
 {
-    // INDEX
     public function index()
     {
-        $purchaseOrders = PurchaseOrder::orderBy('id', 'desc')->get();
-        $warehouses = Warehouse::all();
         $goodReceipts = GoodReceipt::with(['purchaseOrder', 'warehouse'])
             ->orderBy('id', 'desc')
             ->paginate(20);
 
-        return view('good-receipt.index', compact('goodReceipts', 'purchaseOrders', 'warehouses'));
+        return view('good-receipt.index', compact('goodReceipts'));
     }
 
-    // CREATE HEADER
     public function create()
     {
-        // Ambil PO yg belum full received
-        $purchaseOrders = PurchaseOrder::orderBy('id', 'desc')->get();
+        $purchaseOrders = PurchaseOrder::with('details')->orderBy('id', 'desc')->get();
         $warehouses = Warehouse::all();
 
         return view('good-receipt.create', compact('purchaseOrders', 'warehouses'));
     }
 
-    // STORE HEADER
     public function store(Request $request)
     {
         $request->validate([
@@ -42,23 +36,70 @@ class GoodReceiptController extends Controller
         ]);
 
         $goodReceipt = GoodReceipt::create([
-            'po_id'         => $request->po_id,
-            'warehouse_id'  => $request->warehouse_id,
+            'po_id' => $request->po_id,
+            'warehouse_id' => $request->warehouse_id,
             'received_date' => now(),
-            'received_by' => Auth::user()->name,
+            'received_by' => auth()->user()->name,
         ]);
 
-        return redirect()->route('good-receipt.details.create', $goodReceipt->id)
-            ->with('success', 'Good Receipt created.');
+        return redirect()->route('good-receipt.edit', $goodReceipt->id)
+            ->with('success', 'Good Receipt created. Add details below.');
     }
 
-
-    // EDIT (DETAIL INPUT)
     public function edit($id)
     {
-        $goodReceipt = GoodReceipt::with(['po.details.product', 'details'])->findOrFail($id);
-        $poDetails = $goodReceipt->po->details;
+        $goodReceipt = GoodReceipt::with(['purchaseOrder.details.product', 'details.product'])
+            ->findOrFail($id);
+
+        $poDetails = $goodReceipt->purchaseOrder->details;
 
         return view('good-receipt.edit', compact('goodReceipt', 'poDetails'));
+    }
+
+    // ADD DETAIL
+    public function addDetail(Request $request, $id)
+    {
+        $goodReceipt = GoodReceipt::with('purchaseOrder.details')->findOrFail($id);
+
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity'   => 'required|numeric|min:1',
+        ]);
+
+        // Ambil PO Detail
+        $poDetail = $goodReceipt->purchaseOrder->details
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        if (!$poDetail) {
+            return back()->withErrors('Product not in PO.');
+        }
+
+        // Hitung qty yg sudah diterima
+        $qtyReceived = GoodReceiptDetail::where('good_receipt_id', $id)
+            ->where('product_id', $request->product_id)
+            ->sum('quantity');
+
+        $qtyRemaining = $poDetail->quantity - $qtyReceived;
+
+        if ($request->quantity > $qtyRemaining) {
+            return back()->withErrors("Qty exceeds remaining PO qty ($qtyRemaining).");
+        }
+
+        GoodReceiptDetail::create([
+            'good_receipt_id' => $id,
+            'product_id' => $request->product_id,
+            'quantity' => $request->quantity,
+            'unit_price' => $poDetail->unit_price,
+            'total_price' => $poDetail->unit_price * $request->quantity,
+        ]);
+
+        return back()->with('success', 'Detail added.');
+    }
+
+    public function deleteDetail(GoodReceiptDetail $detail)
+    {
+        $detail->delete();
+        return back()->with('success', 'Detail deleted.');
     }
 }
