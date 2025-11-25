@@ -25,7 +25,7 @@
                     <tr class="border-b">
                         <td>{{ $goodReceipt->purchaseOrder->po_number }}</td>
                         <td>{{ $goodReceipt->warehouse->name }}</td>
-                        <td>{{ $goodReceipt->received_date->format('Y-m-d') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($goodReceipt->received_date)->format('Y-m-d') }}</td>
                         <td>
                             <a href="{{ route('good-receipt.details.create', $goodReceipt->id) }}" class="text-indigo-600 hover:underline">Add Details</a>
                         </td>

@@ -5,36 +5,35 @@ namespace App\Http\Controllers;
 use App\Models\GoodReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\Warehouse;
-use App\Models\Location;
-use App\Models\Bin;
-use App\Models\Product;
 use Illuminate\Http\Request;
-use App\Models\GoodReceiptDetail;
+use Illuminate\Support\Facades\Auth;
+
 
 class GoodReceiptController extends Controller
 {
-    // Menampilkan daftar Good Receipts
+    // INDEX
     public function index()
     {
-        $purchaseOrders = PurchaseOrder::all();
-        $goodReceipts = GoodReceipt::with('purchaseOrder', 'warehouse')
-            ->orderBy('received_date', 'desc') // Menampilkan berdasarkan tanggal terima terbaru
-            ->get();
+        $purchaseOrders = PurchaseOrder::orderBy('id', 'desc')->get();
+        $warehouses = Warehouse::all();
+        $goodReceipts = GoodReceipt::with(['purchaseOrder', 'warehouse'])
+            ->orderBy('id', 'desc')
+            ->paginate(20);
 
-        return view('good-receipt.index', compact('goodReceipts', 'purchaseOrders'));
+        return view('good-receipt.index', compact('goodReceipts', 'purchaseOrders', 'warehouses'));
     }
 
-    // Menampilkan form untuk membuat Good Receipt
+    // CREATE HEADER
     public function create()
     {
-        // Ambil semua Purchase Orders yang statusnya "open"
-        $purchaseOrders = PurchaseOrder::all();
+        // Ambil PO yg belum full received
+        $purchaseOrders = PurchaseOrder::orderBy('id', 'desc')->get();
         $warehouses = Warehouse::all();
 
         return view('good-receipt.create', compact('purchaseOrders', 'warehouses'));
     }
 
-    // Menyimpan Good Receipt header
+    // STORE HEADER
     public function store(Request $request)
     {
         $request->validate([
@@ -42,49 +41,24 @@ class GoodReceiptController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
 
-        // Menyimpan header Good Receipt
         $goodReceipt = GoodReceipt::create([
-            'po_id' => $request->po_id,
-            'warehouse_id' => $request->warehouse_id,
+            'po_id'         => $request->po_id,
+            'warehouse_id'  => $request->warehouse_id,
             'received_date' => now(),
+            'received_by' => Auth::user()->name,
         ]);
 
-        // Redirect ke halaman Good Receipt Detail setelah header disimpan
-        return redirect()->route('good-receipt.details.create', $goodReceipt->id);
+        return redirect()->route('good-receipt.details.create', $goodReceipt->id)
+            ->with('success', 'Good Receipt created.');
     }
 
-    // Menampilkan form untuk menambah detail Good Receipt
-    public function createDetails($goodReceiptId)
+
+    // EDIT (DETAIL INPUT)
+    public function edit($id)
     {
-        $goodReceipt = GoodReceipt::findOrFail($goodReceiptId);
-        $poDetails = $goodReceipt->purchaseOrder->details;
-        $locations = Location::where('warehouse_id', $goodReceipt->warehouse_id)->get();
-        $bins = Bin::all(); // Bisa disesuaikan jika perlu filter bin berdasarkan location
+        $goodReceipt = GoodReceipt::with(['po.details.product', 'details'])->findOrFail($id);
+        $poDetails = $goodReceipt->po->details;
 
-        return view('good-receipt.details.create', compact('goodReceipt', 'poDetails', 'locations', 'bins'));
-    }
-
-    // Menyimpan detail Good Receipt
-    public function storeDetails(Request $request, $goodReceiptId)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'location_id' => 'required|exists:locations,id',
-            'bin_id' => 'required|exists:bins,id',
-            'quantity' => 'required|numeric|min:1',
-        ]);
-
-        // Simpan detail Good Receipt
-        $goodReceipt = GoodReceipt::findOrFail($goodReceiptId);
-
-        GoodReceiptDetail::create([
-            'good_receipt_id' => $goodReceipt->id,
-            'product_id' => $request->product_id,
-            'location_id' => $request->location_id,
-            'bin_id' => $request->bin_id,
-            'quantity' => $request->quantity,
-        ]);
-
-        return redirect()->route('good-receipt.index')->with('success', 'Good Receipt created successfully');
+        return view('good-receipt.edit', compact('goodReceipt', 'poDetails'));
     }
 }

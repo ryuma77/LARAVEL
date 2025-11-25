@@ -14,6 +14,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\BinController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GoodReceiptController;
+use App\Http\Controllers\GoodReceiptDetailController;
 
 
 Route::get('/', function () {
@@ -173,17 +174,22 @@ Route::middleware(['auth', 'permission:inventory.manage'])
     ->prefix('good-receipt')
     ->name('good-receipt.')
     ->group(function () {
-        // Daftar Good Receipt
+
+        // INDEX
         Route::get('/', [GoodReceiptController::class, 'index'])->name('index');
 
-        // Menambah Good Receipt baru
+        // CREATE HEADER
         Route::get('/create', [GoodReceiptController::class, 'create'])->name('create');
         Route::post('/', [GoodReceiptController::class, 'store'])->name('store');
 
-        // Menambahkan detail Good Receipt
-        Route::get('/{goodReceiptId}/details/create', [GoodReceiptController::class, 'createDetails'])->name('details.create');
-        Route::post('/{goodReceiptId}/details', [GoodReceiptController::class, 'storeDetails'])->name('details.store');
+        // ENTRY DETAIL
+        Route::get('/{goodReceipt}/details/create', [GoodReceiptDetailController::class, 'create'])
+            ->name('details.create');
+
+        Route::post('/{goodReceipt}/details', [GoodReceiptDetailController::class, 'store'])
+            ->name('details.store');
     });
+
 
 
 
