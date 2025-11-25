@@ -16,6 +16,7 @@ use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GoodReceiptController;
 use App\Http\Controllers\GoodReceiptDetailController;
 use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\ShipmentController;
 
 
 Route::get('/', function () {
@@ -199,6 +200,23 @@ Route::middleware(['auth', 'permission:sales.manage'])
         Route::post('/{id}/details', [SalesOrderController::class, 'addDetail'])->name('details.add');
         Route::delete('/{soId}/details/{detailId}', [SalesOrderController::class, 'deleteDetail'])->name('details.delete');
     });
+
+Route::prefix('shipments')->name('shipments.')->middleware(['auth'])->group(function () {
+
+    Route::get('/', [ShipmentController::class, 'index'])->name('index');
+
+    Route::get('/create', [ShipmentController::class, 'create'])->name('create');
+    Route::post('/', [ShipmentController::class, 'store'])->name('store');
+
+    Route::get('/{id}/edit', [ShipmentController::class, 'edit'])->name('edit');
+    Route::put('/{shipment}', [ShipmentController::class, 'update'])->name('update');
+
+    Route::post('/{id}/details', [ShipmentController::class, 'addDetail'])->name('details.add');
+    Route::delete('/details/{detailId}', [ShipmentController::class, 'deleteDetail'])->name('details.delete');
+
+    Route::post('/{id}/post', [ShipmentController::class, 'post'])->name('post');
+});
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');

@@ -25,6 +25,12 @@ class SalesOrder extends Model
         return $this->belongsTo(BusinessPartner::class, 'customer_id');
     }
 
+    // public function businessPartner()
+    // {
+    //     return $this->belongsTo(BusinessPartner::class, 'bp_id');
+    // }
+
+
     // Relasi ke detail
     public function details()
     {
@@ -37,5 +43,10 @@ class SalesOrder extends Model
 
         $this->total_amount = $total;
         $this->save();
+    }
+
+    public function shipments()
+    {
+        return $this->hasMany(Shipment::class, 'so_id');
     }
 }

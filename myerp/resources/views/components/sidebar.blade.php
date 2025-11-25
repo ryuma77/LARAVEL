@@ -33,17 +33,9 @@ $menu = [
         'label' => 'Transactions',
         'children' => [
             ['id'=>'sales','label'=>'Sales','icon'=>'🛒','href'=>route('sales-order.index'),'permission'=>'purchase.view'],
+             ['id'=>'shipment','label'=>'shipment','icon'=>'📦','href'=>route('shipments.index'),'permission'=>'inventory.view'],
             ['id'=>'purchase','label'=>'Purchase','icon'=>'📥','href'=>route('po.index'),'permission'=>'purchase.view'],
-            ['id'=>'inventory','label'=>'Inventory','icon'=>'📦','href'=>'#','permission'=>'inventory.view'],
              ['id'=>'good-receipt','label'=>'Good Receipt','icon'=>'📦','href'=>route('good-receipt.index'),'permission'=>'inventory.manage'],
-        ],
-    ],
-    'sales' => [
-        'label' => 'Sales',
-        'children' => [
-            ['id'=>'quotation','label'=>'Quotation','icon'=>'🛒','href'=>'#','permission'=>'purchase.view'],
-            ['id'=>'sales_order','label'=>'Sales Order','icon'=>'📥','href'=>'#','permission'=>'purchase.view'],
-            ['id'=>'delivery_order','label'=>'Delivery Order','icon'=>'📦','href'=>'#','permission'=>'inventory.view'],
         ],
     ],
 ];
